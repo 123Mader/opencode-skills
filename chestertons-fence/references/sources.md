@@ -1,0 +1,14 @@
+# Sources — chestertons-fence
+
+> *Primary sources for the [chestertons-fence](../SKILL.md) skill.*
+
+- Chesterton, G. K. (1929). *The Thing.* Sheed & Ward. ISBN 978-1602068191 (reprint). The original formulation, chapter "The Drift from Domesticity."
+- Hayek, F. A. (1973). *Law, Legislation and Liberty, Volume 1: Rules and Order.* University of Chicago Press. The spontaneous-order theoretical extension.
+- Spolsky, J. (2000). "Things You Should Never Do, Part I." *Joel on Software* (joelonsoftware.com). The software-engineering application.
+- Stiglitz, J. E. (2010). *Freefall: America, Free Markets, and the Sinking of the World Economy.* W. W. Norton. ISBN 978-0393075960. The Glass-Steagall application.
+- Bourdieu, P. (1972). *Outline of a Theory of Practice.* Cambridge University Press. ISBN 978-0521291644. The anthropological foundation.
+- Kotter, J. P. (1996). *Leading Change.* Harvard Business School Press. ISBN 978-0875847474. Organizational-change methodology.
+- OECD (2008). *Building an Institutional Framework for Regulatory Impact Analysis (RIA): Guidance for Policy Makers.* The regulatory institutionalization.
+- Shapiro, J. (2001). *Mao's War Against Nature: Politics and the Environment in Revolutionary China.* Cambridge University Press. ISBN 978-0521786805. The Great Sparrow Campaign / ecological-fence application.
+- GitHub. *GitHub Copilot* product documentation (github.com/features/copilot). The AI code-generation/refactor tooling whose 2024–2026 adoption drives the AI-rewrite fence-removal pattern.
+- Cursor (Anysphere). Product documentation (cursor.com / docs.cursor.com). AI-assisted rewrite/refactor tooling for the 2024–2026 AI-rewrite-wave application.
