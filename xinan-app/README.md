@@ -115,3 +115,29 @@ dependencies {
 - 摄像头数据仅本地处理
 - 用户可导出/删除个人数据
 - 非医疗设备，严重情况转介专业帮助
+---
+
+## 开发进度 (2026-09-11)
+
+### ✅ 已完成 (v0.1 骨架)
+- 双模式入口 MainActivity (聊天/视频切换)
+- **视频模式**: VideoFragment (CameraX 前置30fps) + FaceLandmarkerHelper (MediaPipe 468点 GPU加速) + MicroExpressionAnalyzer (FACS AU计算/焦虑指数)
+- **聊天模式**: ChatFragment + MessageAdapter + LLMInference (MediaPipe LLM + CBT系统提示词)
+- **模型管理**: ModelManager (GGUF 推荐模型/本地导入/切换)
+- **后端对接**: ApiClient (注册/登录/情绪上报)
+- **后端**: server.js (Node.js, 注册/情绪/分析 API)
+- **数据库**: schema.sql (用户/情绪事件/会话/聚合)
+- **构建**: build.gradle + AndroidManifest
+
+### 🔜 下一步开发
+- [ ] YUV→Bitmap 完整转换 (VideoFragment 帧处理)
+- [ ] 情绪仪表盘 UI (焦虑指数条/心情图标覆盖层)
+- [ ] 微表情深度学习分类器 (CNN+LSTM 替换规则加权)
+- [ ] 个人基线校准 (30秒平静视频)
+- [ ] 短信验证码服务对接
+- [ ] 记忆系统 (Room 本地情绪日志)
+
+### 📱 运行
+1. Android Studio 打开 `android/`
+2. 下载 GGUF 模型放入手机 `Android/data/com.xinan.app/files/models/`
+3. 连接一加手机运行
