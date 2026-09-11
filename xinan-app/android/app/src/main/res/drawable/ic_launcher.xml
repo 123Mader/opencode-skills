@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 心安图标: 蓝色圆 + 白色心形 -->
+    <path
+        android:fillColor="#64B5F6"
+        android:pathData="M54,54m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,70c-12,-8 -22,-16 -22,-26c0,-6 4,-10 10,-10c5,0 9,3 12,7c3,-4 7,-7 12,-7c6,0 10,4 10,10c0,10 -10,18 -22,26z" />
+</vector>

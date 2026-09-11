@@ -13,8 +13,8 @@
 
     <application
         android:label="心安"
-        android:icon="@mipmap/ic_launcher"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        android:icon="@drawable/ic_launcher"
+        android:theme="@style/Theme.Xinan"
         android:allowBackup="false"
         android:supportsRtl="true">
 

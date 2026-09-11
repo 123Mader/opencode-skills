@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Xinan" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:statusBarColor">#1E2B32</item>
+        <item name="android:windowBackground">@color/xinan_bg</item>
+    </style>
+</resources>
