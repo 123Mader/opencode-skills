@@ -141,3 +141,37 @@ dependencies {
 1. Android Studio 打开 `android/`
 2. 下载 GGUF 模型放入手机 `Android/data/com.xinan.app/files/models/`
 3. 连接一加手机运行
+
+---
+
+## 开发进度 v0.2 (2026-09-11 更新)
+
+### ✅ 本轮新增 (步骤1-3)
+1. **YuvToBitmap.kt** — YUV_420_888→Bitmap 真实转换 (BT.601, 前置镜像)
+2. **EmotionDashboardView.kt** — 情绪仪表盘覆盖层 (焦虑指数条/心情emoji/微表情提示, 焦虑变色)
+3. **XinanMemory.kt** — Room 情绪日志数据库 (Entity/DAO, 焦虑均值/情绪分布/高焦虑统计)
+4. **MemoryRepository.kt** — 记忆仓储 (记录情绪+30天趋势+成长报告)
+5. **VideoFragment 升级** — 接入真实YUV转换 + 仪表盘覆盖层 + 情绪自动记录
+
+### 代码结构 (21文件)
+```
+android/app/src/main/java/com/xinan/app/
+├── MainActivity.kt          # 双模式入口
+├── chat/                    # 聊天模式
+│   ├── ChatFragment.kt
+│   └── MessageAdapter.kt
+├── video/                   # 视频模式 ★
+│   ├── VideoFragment.kt     # 摄像头+仪表盘+记忆
+│   └── EmotionDashboardView.kt
+├── vision/                  # 视觉微表情
+│   ├── FaceLandmarkerHelper.kt
+│   ├── MicroExpressionAnalyzer.kt
+│   └── YuvToBitmap.kt
+├── llm/                     # 大模型
+│   ├── LLMInference.kt
+│   └── ModelManager.kt
+└── data/                    # 数据层
+    ├── ApiClient.kt         # 后端
+    ├── XinanMemory.kt       # Room数据库
+    └── MemoryRepository.kt  # 记忆仓储
+```
