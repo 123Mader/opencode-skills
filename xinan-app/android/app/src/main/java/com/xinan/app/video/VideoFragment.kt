@@ -15,6 +15,8 @@ import androidx.fragment.app.Fragment
 import com.xinan.app.vision.FaceLandmarkerHelper
 import com.xinan.app.vision.MicroExpressionAnalyzer
 import kotlin.concurrent.thread
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
@@ -27,6 +29,8 @@ class VideoFragment : Fragment() {
 
     private lateinit var previewView: PreviewView
     private lateinit var faceLandmarker: FaceLandmarkerHelper
+    private lateinit var dashboard: EmotionDashboardView
+    private lateinit var memory: com.xinan.app.data.MemoryRepository
     private val analyzer = MicroExpressionAnalyzer()
 
     // 最近一次分析结果 (用于UI更新)
@@ -39,14 +43,31 @@ class VideoFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         previewView = PreviewView(requireContext())
-        return previewView
+        // 叠加情绪仪表盘 (右下角)
+        val overlay = android.widget.FrameLayout(requireContext())
+        overlay.addView(previewView)
+        dashboard = EmotionDashboardView(requireContext())
+        val lp = android.widget.FrameLayout.LayoutParams(500, 260, android.view.Gravity.END or android.view.Gravity.BOTTOM)
+        lp.setMargins(16, 16, 16, 120)
+        overlay.addView(dashboard, lp)
+        return overlay
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         checkPermissions()
+        memory = com.xinan.app.data.MemoryRepository(requireContext())
         setupFaceLandmarker()
         startCamera()
+        onEmotionUpdate = { emotion, anxiety, micro ->
+            activity?.runOnUiThread {
+                dashboard.update(emotion, anxiety, micro)
+            }
+            // 后台记录情绪日志
+            kotlinx.coroutines.GlobalScope.launch {
+                memory.recordEmotion("video", emotion, anxiety)
+            }
+        }
     }
 
     private fun setupFaceLandmarker() {
@@ -110,21 +131,12 @@ class VideoFragment : Fragment() {
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    /** 帧处理: Bitmap → FaceLandmarker */
+    /** 帧处理: YUV_420_888 → Bitmap → FaceLandmarker (前置镜像) */
     private fun processImageProxy(imageProxy: ImageProxy) {
-        val bitmap = imageProxy.toBitmap()  // YUV → Bitmap
-        faceLandmarker.processFrame(bitmap, imageProxy.imageInfo.timestamp)
+        val bitmap = com.xinan.app.vision.YuvToBitmap.convert(imageProxy.image)
+        val mirrored = com.xinan.app.vision.YuvToBitmap.mirror(bitmap)  // 前置摄像头镜像
+        faceLandmarker.processFrame(mirrored, imageProxy.imageInfo.timestamp)
         imageProxy.close()
-    }
-
-    /** 相机帧 → Bitmap 转换 */
-    private fun ImageProxy.toBitmap(): Bitmap {
-        // 简化: 使用 ImageProxy 转 Bitmap (实际需 YUV→RGB 转换)
-        val buffer = planes[0].buffer
-        val width = width; val height = height
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        // TODO: 完整 YUV→ARGB 转换 (此处为骨架)
-        return bitmap
     }
 
     private fun checkPermissions() {
