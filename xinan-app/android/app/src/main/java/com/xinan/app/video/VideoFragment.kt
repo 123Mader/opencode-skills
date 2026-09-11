@@ -38,6 +38,8 @@ class VideoFragment : Fragment() {
     private var lastAnxiety = 0
     private var lastMicroExpr = emptyList<String>()
 
+    private var lastAlertTime = 0L  // 防重复触发
+
     // 焦虑指数变化回调 (供UI层显示仪表盘)
     var onEmotionUpdate: ((emotion: String, anxiety: Int, microExpr: List<String>) -> Unit)? = null
 
@@ -89,11 +91,19 @@ class VideoFragment : Fragment() {
         faceLandmarker.setup()
     }
 
-    /** 高焦虑触发疏导 (由上层AI对话模块处理) */
+    /** 高焦虑触发疏导: 30秒防抖 + 启动正念呼吸 */
     private fun onHighAnxietyDetected(result: MicroExpressionAnalyzer.AnalysisResult) {
-        // 示例: 回调给 Activity 触发正念引导或AI对话
-        // TODO: 接入 LLM 对话模块, AI 主动关怀:
-        //   "我注意到你刚才眉头紧锁, 嘴唇也抿紧了, 是遇到什么让你紧张的事了吗?"
+        val now = System.currentTimeMillis()
+        if (now - lastAlertTime < 30000) return  // 30秒内不重复
+        lastAlertTime = now
+
+        // 启动正念呼吸引导
+        try {
+            val intent = android.content.Intent(requireContext(), com.xinan.app.relax.BreathingGuideActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            android.util.Log.e("VideoFragment", "正念引导启动失败: ${e.message}")
+        }
         onAnxietyAlert?.invoke(result)
     }
 

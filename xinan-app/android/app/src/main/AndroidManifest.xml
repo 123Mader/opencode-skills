@@ -19,8 +19,9 @@
         android:supportsRtl="true">
 
         <!-- 主活动: 双模式(聊天/视频) -->
+        <!-- 登录入口 (启动器) -->
         <activity
-            android:name=".MainActivity"
+            android:name=".auth.LoginActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -28,6 +29,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 正念呼吸引导 -->
+        <activity
+            android:name=".relax.BreathingGuideActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- 主界面 (由登录后进入) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
         <!-- 隐私声明: 非医疗设备, 严重情况引导就医 -->
 
