@@ -175,3 +175,31 @@ android/app/src/main/java/com/xinan/app/
     ├── XinanMemory.kt       # Room数据库
     └── MemoryRepository.kt  # 记忆仓储
 ```
+
+---
+
+## 云构建 (无电脑也能出 APK!)
+
+### GitHub Actions 自动构建
+项目已配置 `.github/workflows/build-apk.yml`:
+- push 到 main 分支 (android/** 变更) 自动构建
+- 也可在 GitHub 网页手动触发: **Actions → Build APK → Run workflow**
+
+### 使用步骤
+1. 代码推送到 GitHub (main 分支)
+2. GitHub Actions 自动云端编译 → 产出 APK
+3. 构建成功后:
+   - **Artifacts**: Actions 页面下载 xinan-debug-apk
+   - **Releases**: 主页 Releases 下载 APK
+4. 手机安装 APK (允许安装未知来源)
+
+### 手机安装注意事项
+- debug 版 APK 可直接安装 (未签名正式版)
+- 首次运行需授权: 摄像头权限(视频模式)/存储权限(模型)
+- 模型需放入: Android/data/com.xinan.app/files/models/ 或应用内下载
+
+### 触发方式
+```bash
+# 本地修改后推 GitHub (用 gh_sync.js)
+node gh_sync.js push /storage/emulated/0/MT2/心安项目 123Mader/opencode-skills xinan-app
+```

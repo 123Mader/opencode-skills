@@ -6,7 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import androidx.core.view.doOnEnd
+import androidx.core.animation.doOnEnd
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 

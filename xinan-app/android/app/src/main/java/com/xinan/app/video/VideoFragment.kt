@@ -143,9 +143,11 @@ class VideoFragment : Fragment() {
 
     /** 帧处理: YUV_420_888 → Bitmap → FaceLandmarker (前置镜像) */
     private fun processImageProxy(imageProxy: ImageProxy) {
-        val bitmap = com.xinan.app.vision.YuvToBitmap.convert(imageProxy.image)
-        val mirrored = com.xinan.app.vision.YuvToBitmap.mirror(bitmap)  // 前置摄像头镜像
-        faceLandmarker.processFrame(mirrored, imageProxy.imageInfo.timestamp)
+        imageProxy.image?.let { img ->
+            val bitmap = com.xinan.app.vision.YuvToBitmap.convert(img)
+            val mirrored = com.xinan.app.vision.YuvToBitmap.mirror(bitmap)  // 前置摄像头镜像
+            faceLandmarker.processFrame(mirrored, imageProxy.imageInfo.timestamp)
+        }
         imageProxy.close()
     }
 
