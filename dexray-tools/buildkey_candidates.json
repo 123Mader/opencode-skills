@@ -1,0 +1,443 @@
+[
+ {
+  "offset": 83069,
+  "len": 14,
+  "key": "5957175141414973",
+  "buildKey": "038011f069c495",
+  "uniq": 10
+ },
+ {
+  "offset": 83070,
+  "len": 13,
+  "key": "571751414149735f",
+  "buildKey": "38011f009c495",
+  "uniq": 9
+ },
+ {
+  "offset": 87589,
+  "len": 13,
+  "key": "175d575f5f496345",
+  "buildKey": "81618f01e498d",
+  "uniq": 9
+ },
+ {
+  "offset": 267042,
+  "len": 15,
+  "key": "7f99cb6775cbc367",
+  "buildKey": "1004525020389b9",
+  "uniq": 9
+ },
+ {
+  "offset": 503594,
+  "len": 15,
+  "key": "7f99cb6775cbc367",
+  "buildKey": "1004525020389b9",
+  "uniq": 9
+ },
+ {
+  "offset": 529407,
+  "len": 16,
+  "key": "91c77b33cbc5673b",
+  "buildKey": "800323018348b8d9",
+  "uniq": 9
+ },
+ {
+  "offset": 529408,
+  "len": 15,
+  "key": "c77b33cbc5673b91",
+  "buildKey": "00323018348b8d9",
+  "uniq": 9
+ },
+ {
+  "offset": 529409,
+  "len": 14,
+  "key": "7b33cbc5673b91c5",
+  "buildKey": "0323018148b8d9",
+  "uniq": 9
+ },
+ {
+  "offset": 77429,
+  "len": 11,
+  "key": "575b394155434359",
+  "buildKey": "30f70100859",
+  "uniq": 8
+ },
+ {
+  "offset": 87590,
+  "len": 12,
+  "key": "5d575f5f49634543",
+  "buildKey": "1618f011498d",
+  "uniq": 8
+ },
+ {
+  "offset": 89562,
+  "len": 14,
+  "key": "5d39515f51435f59",
+  "buildKey": "290151009f8187",
+  "uniq": 8
+ },
+ {
+  "offset": 90979,
+  "len": 14,
+  "key": "5743514559436f31",
+  "buildKey": "21016111834787",
+  "uniq": 8
+ },
+ {
+  "offset": 265642,
+  "len": 15,
+  "key": "3999cb6735cbcf57",
+  "buildKey": "0004525020389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 265643,
+  "len": 14,
+  "key": "99cb6735cbcf573b",
+  "buildKey": "004525000389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 265644,
+  "len": 13,
+  "key": "cb6735cbcf573b99",
+  "buildKey": "04525000389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 265645,
+  "len": 12,
+  "key": "6735cbcf573b99c9",
+  "buildKey": "4525000189b9",
+  "uniq": 8
+ },
+ {
+  "offset": 267043,
+  "len": 14,
+  "key": "99cb6775cbc3677d",
+  "buildKey": "004525000389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 267044,
+  "len": 13,
+  "key": "cb6775cbc3677d99",
+  "buildKey": "04525000389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 267045,
+  "len": 12,
+  "key": "6775cbc3677d99c9",
+  "buildKey": "4525000189b9",
+  "uniq": 8
+ },
+ {
+  "offset": 502838,
+  "len": 15,
+  "key": "3999cb6735cbcf57",
+  "buildKey": "0004525020389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 502839,
+  "len": 14,
+  "key": "99cb6735cbcf573b",
+  "buildKey": "004525000389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 502840,
+  "len": 13,
+  "key": "cb6735cbcf573b99",
+  "buildKey": "04525000389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 502841,
+  "len": 12,
+  "key": "6735cbcf573b99c9",
+  "buildKey": "4525000189b9",
+  "uniq": 8
+ },
+ {
+  "offset": 503595,
+  "len": 14,
+  "key": "99cb6775cbc3677d",
+  "buildKey": "004525000389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 503596,
+  "len": 13,
+  "key": "cb6775cbc3677d99",
+  "buildKey": "04525000389b9",
+  "uniq": 8
+ },
+ {
+  "offset": 503597,
+  "len": 12,
+  "key": "6775cbc3677d99c9",
+  "buildKey": "4525000189b9",
+  "uniq": 8
+ },
+ {
+  "offset": 529410,
+  "len": 13,
+  "key": "33cbc5673b91c57f",
+  "buildKey": "323018108b8d9",
+  "uniq": 8
+ },
+ {
+  "offset": 78809,
+  "len": 11,
+  "key": "555d556551455975",
+  "buildKey": "46050110988",
+  "uniq": 7
+ },
+ {
+  "offset": 87591,
+  "len": 11,
+  "key": "575f5f4963454359",
+  "buildKey": "618f011098d",
+  "uniq": 7
+ },
+ {
+  "offset": 88165,
+  "len": 11,
+  "key": "555d556551455975",
+  "buildKey": "46050110988",
+  "uniq": 7
+ },
+ {
+  "offset": 89563,
+  "len": 13,
+  "key": "39515f51435f5955",
+  "buildKey": "90151001f8187",
+  "uniq": 7
+ },
+ {
+  "offset": 91370,
+  "len": 12,
+  "key": "0311554145451153",
+  "buildKey": "81846111f1e9",
+  "uniq": 7
+ },
+ {
+  "offset": 108206,
+  "len": 12,
+  "key": "5b595d3961450301",
+  "buildKey": "26392111989f",
+  "uniq": 7
+ },
+ {
+  "offset": 108207,
+  "len": 11,
+  "key": "595d396145030153",
+  "buildKey": "6392111189f",
+  "uniq": 7
+ },
+ {
+  "offset": 356981,
+  "len": 12,
+  "key": "33799bc57b7399c5",
+  "buildKey": "0f11410089b8",
+  "uniq": 7
+ },
+ {
+  "offset": 356982,
+  "len": 11,
+  "key": "799bc57b7399c53b",
+  "buildKey": "f11410009b8",
+  "uniq": 7
+ },
+ {
+  "offset": 366113,
+  "len": 12,
+  "key": "33799bc57b7399c5",
+  "buildKey": "0f11410089b8",
+  "uniq": 7
+ },
+ {
+  "offset": 366114,
+  "len": 11,
+  "key": "799bc57b7399c53b",
+  "buildKey": "f11410009b8",
+  "uniq": 7
+ },
+ {
+  "offset": 501594,
+  "len": 15,
+  "key": "3999cb6735cbcf57",
+  "buildKey": "0000525020389b9",
+  "uniq": 7
+ },
+ {
+  "offset": 501595,
+  "len": 14,
+  "key": "99cb6735cbcf573b",
+  "buildKey": "000525000389b9",
+  "uniq": 7
+ },
+ {
+  "offset": 501596,
+  "len": 13,
+  "key": "cb6735cbcf573b99",
+  "buildKey": "00525000389b9",
+  "uniq": 7
+ },
+ {
+  "offset": 501597,
+  "len": 12,
+  "key": "6735cbcf573b99c9",
+  "buildKey": "0525000189b9",
+  "uniq": 7
+ },
+ {
+  "offset": 622577,
+  "len": 12,
+  "key": "33799bc57b7399c5",
+  "buildKey": "0f11410089b8",
+  "uniq": 7
+ },
+ {
+  "offset": 622578,
+  "len": 11,
+  "key": "799bc57b7399c53b",
+  "buildKey": "f11410009b8",
+  "uniq": 7
+ },
+ {
+  "offset": 83751,
+  "len": 11,
+  "key": "09510f6511514511",
+  "buildKey": "9a8e1011e8a",
+  "uniq": 6
+ },
+ {
+  "offset": 90485,
+  "len": 11,
+  "key": "5d396b655f47595f",
+  "buildKey": "294010019f9",
+  "uniq": 6
+ },
+ {
+  "offset": 92316,
+  "len": 14,
+  "key": "3155575f55415f53",
+  "buildKey": "12210360188108",
+  "uniq": 6
+ },
+ {
+  "offset": 92317,
+  "len": 13,
+  "key": "55575f55415f5331",
+  "buildKey": "2210360188108",
+  "uniq": 6
+ },
+ {
+  "offset": 271102,
+  "len": 13,
+  "key": "3199c5673991c57f",
+  "buildKey": "60301810808d8",
+  "uniq": 6
+ },
+ {
+  "offset": 273294,
+  "len": 13,
+  "key": "3199c5673991c57f",
+  "buildKey": "60301810808d8",
+  "uniq": 6
+ },
+ {
+  "offset": 287322,
+  "len": 13,
+  "key": "3199c5673991c57f",
+  "buildKey": "60301810808d8",
+  "uniq": 6
+ },
+ {
+  "offset": 288062,
+  "len": 13,
+  "key": "3199c5673991c57f",
+  "buildKey": "60301810808d8",
+  "uniq": 6
+ },
+ {
+  "offset": 368597,
+  "len": 12,
+  "key": "333993190331a17b",
+  "buildKey": "0290b10169b9",
+  "uniq": 6
+ },
+ {
+  "offset": 397934,
+  "len": 13,
+  "key": "3199c5673991c57f",
+  "buildKey": "60301810808d8",
+  "uniq": 6
+ },
+ {
+  "offset": 534549,
+  "len": 12,
+  "key": "353109d921af2b0f",
+  "buildKey": "1181601069b9",
+  "uniq": 6
+ },
+ {
+  "offset": 534550,
+  "len": 11,
+  "key": "3109d921af2b0f33",
+  "buildKey": "181601009b9",
+  "uniq": 6
+ },
+ {
+  "offset": 626186,
+  "len": 13,
+  "key": "3199c5673991c57f",
+  "buildKey": "60301810808d8",
+  "uniq": 6
+ },
+ {
+  "offset": 724334,
+  "len": 13,
+  "key": "3199c5673991c57f",
+  "buildKey": "60301810808d8",
+  "uniq": 6
+ },
+ {
+  "offset": 6081,
+  "len": 10,
+  "key": "3939631331313131",
+  "buildKey": "99c01111ff",
+  "uniq": 5
+ },
+ {
+  "offset": 83752,
+  "len": 10,
+  "key": "510f65115145115d",
+  "buildKey": "a8e101118a",
+  "uniq": 5
+ },
+ {
+  "offset": 368598,
+  "len": 11,
+  "key": "3993190331a17b35",
+  "buildKey": "290b10109b9",
+  "uniq": 5
+ },
+ {
+  "offset": 644595,
+  "len": 14,
+  "key": "ad513b31c9190531",
+  "buildKey": "701107c1919109",
+  "uniq": 5
+ },
+ {
+  "offset": 695435,
+  "len": 14,
+  "key": "ad513b31c9b90131",
+  "buildKey": "70110151919109",
+  "uniq": 5
+ }
+]
