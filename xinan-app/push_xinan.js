@@ -17,7 +17,6 @@ async function api(url, body, method = 'POST', retries = 5) {
     try {
       const res = await fetch(API + url, { method, headers: HEADERS, body: body ? JSON.stringify(body) : undefined });
       const j = await res.json().catch(() => ({}));
-      console.log(`  DBG ${method} ${url} -> ${res.status}${j.message ? " "+j.message : ""}`);
       if (res.ok) return j;
       if (res.status === 403 || res.status === 429) {
         const wait = 5000 * Math.pow(2, attempt) + Math.floor(Math.random() * 1000);
