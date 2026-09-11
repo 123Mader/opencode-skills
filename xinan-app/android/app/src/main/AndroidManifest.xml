@@ -30,6 +30,18 @@
             </intent-filter>
         </activity>
 
+        <!-- 模型管理 -->
+        <activity
+            android:name=".llm.ModelManageActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- 成长报告 -->
+        <activity
+            android:name=".report.GrowthReportActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
         <!-- 正念呼吸引导 -->
         <activity
             android:name=".relax.BreathingGuideActivity"
