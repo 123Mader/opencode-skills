@@ -1,0 +1,47 @@
+name: Build APK
+
+# 触发: push 到 main 分支 或 手动触发
+on:
+  push:
+    branches: [main]
+    paths: ['xinan-app/android/**', '.github/workflows/build-apk.yml']
+  workflow_dispatch:    # 允许在 GitHub 网页手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: gradle:8.5-jdk17    # 自带 Gradle + JDK17
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Debug APK
+        working-directory: xinan-app/android
+        run: gradle assembleDebug --no-daemon
+
+      - name: Upload APK (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: xinan-debug-apk
+          path: xinan-app/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/main' && success()
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 心安 v0.2
+          tag_name: v0.2
+          body: |
+            🧠 心安 - 安卓焦虑情绪助手
+            - 聊天模式 (CBT疏导)
+            - 视频模式 (微表情分析)
+            - 手机号注册/登录
+            - 正念呼吸引导
+            - 记忆系统/成长报告
+          files: xinan-app/android/app/build/outputs/apk/debug/*.apk
+          fail_on_unmatched_files: false
