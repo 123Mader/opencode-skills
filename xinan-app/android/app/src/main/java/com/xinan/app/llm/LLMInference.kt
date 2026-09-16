@@ -2,8 +2,6 @@ package com.xinan.app.llm
 
 import android.content.Context
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
-import com.google.mediapipe.tasks.genai.llminference.LlmInferenceOptions
-import com.google.mediapipe.tasks.genai.llminference.ResultListener
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -15,7 +13,7 @@ class LLMInference(private val context: Context) {
 
     companion object {
         // 内置 CBT 心理疏导系统提示词
-        const val CBT_SYSTEM_PROMPT = """
+        val CBT_SYSTEM_PROMPT = """
             你是一个温暖、专业的 AI 情绪陪伴师，名叫「心安」。
             你的使命：帮助用户缓解焦虑情绪，回归自然快乐的生活。
 
@@ -43,7 +41,7 @@ class LLMInference(private val context: Context) {
     fun loadModel(modelPath: String, onLoaded: (Boolean) -> Unit) {
         executor.execute {
             try {
-                val options = LlmInferenceOptions.builder()
+                val options = LlmInference.LlmInferenceOptions.builder()
                     .setModelPath(modelPath)
                     .setMaxTokens(1024)
                     .setSystemPrompt(CBT_SYSTEM_PROMPT)
@@ -73,7 +71,7 @@ class LLMInference(private val context: Context) {
             prompt = "[视觉观察: $visualContext]\n$userMessage"
         }
 
-        model.generateAsync(prompt, object : ResultListener {
+        model.generateAsync(prompt, object : LlmInference.LlmInferenceResultListener {
             override fun onResult(result: String?, error: Throwable?) {
                 val text = result ?: "抱歉, 我有点走神了, 能再说一遍吗?"
                 conversationHistory.add("心安: $text")
