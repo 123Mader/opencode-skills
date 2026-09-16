@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.xinan.app.llm.CBTFlow
 
 /**
  * MediaPipe LLM 推理封装 (安卓本地大模型)
@@ -33,6 +34,8 @@ class LLMInference(private val context: Context) {
     private var llmInference: LlmInference? = null
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
     private var conversationHistory = mutableListOf<String>()
+    private val cbtFlow = CBTFlow()
+    private var currentStage = CBTFlow.Stage.LISTENING
 
     /**
      * 加载模型 (支持运行时切换不同 GGUF)
@@ -64,11 +67,18 @@ class LLMInference(private val context: Context) {
         val model = llmInference ?: run { onResult("模型未加载"); return }
         conversationHistory.add("用户: $userMessage")
 
-        // 拼接 CBT 系统提示词 + 视觉观察 + 用户消息 (MediaPipe LLM 无独立 system prompt)
-        var prompt = CBT_SYSTEM_PROMPT + "\n\n"
-        if (!visualContext.isNullOrBlank()) {
-            prompt += "[视觉观察: $visualContext]\n"
+        // 危机检测 (最高优先级)
+        if (cbtFlow.isCrisis(userMessage)) {
+            onResult("我很在意你刚才说的话。如果你现在有伤害自己的想法，请立即拨打心理援助热线 400-161-9995 或去医院寻求帮助。你的安全最重要。")
+            return
         }
+        // 认知偏差识别
+        val (biasType, biasQuote) = cbtFlow.identifyBias(userMessage)
+        if (biasType != null) currentStage = CBTFlow.Stage.IDENTIFY
+        // 拼接 CBT 系统提示词 + 阶段引导 + 视觉观察 + 用户消息
+        var prompt = CBT_SYSTEM_PROMPT + "\n\n"
+        if (!visualContext.isNullOrBlank()) prompt += "[视觉观察: $visualContext]\n"
+        prompt += cbtFlow.buildStagePrompt(CBTFlow.Context(currentStage, userMessage, biasType, biasQuote)) + "\n"
         prompt += userMessage
 
         // MediaPipe LLM: generateResponse (同步) 在后台线程执行
