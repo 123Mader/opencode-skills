@@ -82,9 +82,9 @@ class GrowthReportActivity : AppCompatActivity() {
             val days = dayMap.keys.toList()
             val avgValues = dayMap.values.map { list -> list.average().toInt() }
 
+            val report = memory.growthReport()
             runOnUiThread {
                 chartView.setData(avgValues, days)
-                val report = memory.growthReport()
                 summaryText.text = report
             }
         }
