@@ -12,7 +12,7 @@ import java.util.concurrent.Executors
 class LLMInference(private val context: Context) {
 
     companion object {
-        // 内置 CBT 心理疏导系统提示词
+        // 内置 CBT 心理疏导系统提示词 (注: 拼接到 prompt 中, 因为 MediaPipe LLM 不支持独立 system prompt)
         val CBT_SYSTEM_PROMPT = """
             你是一个温暖、专业的 AI 情绪陪伴师，名叫「心安」。
             你的使命：帮助用户缓解焦虑情绪，回归自然快乐的生活。
@@ -44,7 +44,6 @@ class LLMInference(private val context: Context) {
                 val options = LlmInference.LlmInferenceOptions.builder()
                     .setModelPath(modelPath)
                     .setMaxTokens(1024)
-                    .setSystemPrompt(CBT_SYSTEM_PROMPT)
                     .build()
                 llmInference = LlmInference.createFromOptions(context, options)
                 onLoaded(true)
@@ -65,19 +64,23 @@ class LLMInference(private val context: Context) {
         val model = llmInference ?: run { onResult("模型未加载"); return }
         conversationHistory.add("用户: $userMessage")
 
-        // 如果视觉检测到焦虑, 让AI感知
-        var prompt = userMessage
+        // 拼接 CBT 系统提示词 + 视觉观察 + 用户消息 (MediaPipe LLM 无独立 system prompt)
+        var prompt = CBT_SYSTEM_PROMPT + "\n\n"
         if (!visualContext.isNullOrBlank()) {
-            prompt = "[视觉观察: $visualContext]\n$userMessage"
+            prompt += "[视觉观察: $visualContext]\n"
         }
+        prompt += userMessage
 
-        model.generateAsync(prompt, object : LlmInference.LlmInferenceResultListener {
-            override fun onResult(result: String?, error: Throwable?) {
-                val text = result ?: "抱歉, 我有点走神了, 能再说一遍吗?"
-                conversationHistory.add("心安: $text")
-                onResult(text)
+        // MediaPipe LLM: generateResponse (同步) 在后台线程执行
+        executor.execute {
+            try {
+                val result = model.generateResponse(prompt) ?: "抱歉, 我有点走神了, 能再说一遍吗?"
+                conversationHistory.add("心安: $result")
+                onResult(result)
+            } catch (e: Exception) {
+                onResult("抱歉, 我现在有点卡, 稍后再聊~")
             }
-        })
+        }
     }
 
     /** 释放模型 */

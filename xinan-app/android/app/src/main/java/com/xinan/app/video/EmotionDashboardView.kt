@@ -17,7 +17,6 @@ class EmotionDashboardView @JvmOverloads constructor(context: Context, attrs: At
 
     private val bgPaint = Paint().apply {
         color = Color.argb(120, 0, 0, 0)
-        cornerRadius = 24f
     }
     private val textPaint = Paint().apply {
         color = Color.WHITE

@@ -15,7 +15,7 @@ import java.util.concurrent.Executors
  * 配置: GPU delegate (天玑9000 Mali-G710 加速)
  * 模式: LIVE_STREAM 实时流式 (30fps)
  */
-class FaceLandmarkerHelper(context: Context, private val listener: (List<FloatArray>) -> Unit) {
+class FaceLandmarkerHelper(private val context: Context, private val listener: (List<FloatArray>) -> Unit) {
 
     companion object {
         private const val MODEL_PATH = "face_landmarker.task"  // 放在 assets/
