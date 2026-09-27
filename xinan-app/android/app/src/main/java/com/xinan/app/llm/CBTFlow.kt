@@ -105,4 +105,18 @@ class CBTFlow {
         )
         return crisis.any { text.contains(it) }
     }
+
+    /**
+     * ★ 由微表情心理预期生成"镜像反馈"引导 prompt
+     * 让 LLM 以试探性口吻把观察反馈给用户("我注意到你似乎在…是这样吗?"), 而非断言。
+     */
+    fun buildProjectionReflection(p: com.xinan.app.vision.PsychologicalProjection.Projection): String = """
+        [当前心理预期推断 — 来自视频微表情]
+        标签: ${p.label} (置信度 ${(p.normalizedConfidence * 100).toInt()}%)
+        观察: ${p.summary}
+        焦虑轨迹: ${p.trajectoryNote}
+        疏导方向: ${p.advice}
+        要求: 用温和、试探的方式把这一观察反馈给用户(例:"我注意到你似乎…, 是这样吗?"),
+              不要断言, 让用户确认或修正; 若用户否认, 立即尊重其自我描述而非坚持推断。
+    """.trimIndent()
 }

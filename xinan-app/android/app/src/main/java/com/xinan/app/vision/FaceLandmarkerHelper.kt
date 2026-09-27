@@ -28,37 +28,43 @@ class FaceLandmarkerHelper(private val context: Context, private val listener: (
     private var landmarker: FaceLandmarker? = null
     private var isProcessing = false
 
-    /** 初始化 FaceLandmarker (GPU加速) */
+    /** 初始化 FaceLandmarker (GPU加速). 模型缺失不崩, 容错降级 */
     fun setup() {
-        val baseOptions = BaseOptions.builder()
-            .setModelAssetPath(MODEL_PATH)
-            .setDelegate(Delegate.GPU)  // 天玑9000 Mali-G710 GPU加速
-            .build()
+        try {
+            val baseOptions = BaseOptions.builder()
+                .setModelAssetPath(MODEL_PATH)
+                .setDelegate(Delegate.GPU)  // 天玑9000 Mali-G710 GPU加速
+                .build()
 
-        val options = FaceLandmarker.FaceLandmarkerOptions.builder()
-            .setBaseOptions(baseOptions)
-            .setRunningMode(RunningMode.LIVE_STREAM)
-            .setNumFaces(NUM_FACES)
-            .setMinFaceDetectionConfidence(MIN_FACE_DETECTION_CONFIDENCE)
-            .setMinTrackingConfidence(MIN_TRACKING_CONFIDENCE)
-            .setResultListener { result: FaceLandmarkerResult, _: MPImage ->
-                handleResult(result)
-            }
-            .setErrorListener { error ->
-                android.util.Log.e("FaceLandmarker", "错误: ${error.message}")
-            }
-            .build()
+            val options = FaceLandmarker.FaceLandmarkerOptions.builder()
+                .setBaseOptions(baseOptions)
+                .setRunningMode(RunningMode.LIVE_STREAM)
+                .setNumFaces(NUM_FACES)
+                .setMinFaceDetectionConfidence(MIN_FACE_DETECTION_CONFIDENCE)
+                .setMinTrackingConfidence(MIN_TRACKING_CONFIDENCE)
+                .setResultListener { result: FaceLandmarkerResult, _: MPImage ->
+                    handleResult(result)
+                }
+                .setErrorListener { error ->
+                    android.util.Log.e("FaceLandmarker", "错误: ${error.message}")
+                }
+                .build()
 
-        landmarker = FaceLandmarker.createFromOptions(context, options)
+            landmarker = FaceLandmarker.createFromOptions(context, options)
+        } catch (e: Exception) {
+            android.util.Log.e("FaceLandmarker", "初始化失败(模型 $MODEL_PATH 缺失?): ${e.message}")
+            landmarker = null  // 降级: processFrame 直接跳过, 不崩
+        }
     }
 
     /** 处理实时帧 (由 CameraX Analyzer 调用) */
     fun processFrame(bitmap: android.graphics.Bitmap, frameTimestampMs: Long) {
+        val lm = landmarker ?: return  // 未初始化(模型缺失)直接跳过
         if (isProcessing) return  // 帧节流, 防积压
         isProcessing = true
         val mpImage = BitmapImageBuilder(bitmap).build()
         backgroundExecutor.execute {
-            landmarker?.detectAsync(mpImage, frameTimestampMs)
+            lm.detectAsync(mpImage, frameTimestampMs)
         }
     }
 

@@ -2,7 +2,6 @@ package com.xinan.app.video
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,18 +11,18 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.xinan.app.vision.FaceLandmarkerHelper
 import com.xinan.app.vision.MicroExpressionAnalyzer
-import kotlin.concurrent.thread
-import kotlinx.coroutines.GlobalScope
+import com.xinan.app.vision.PsychologicalProjection
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 /**
- * 视频陪伴模式 — 摄像头实时微表情分析
+ * 视频陪伴模式 — 摄像头实时微表情分析 + ★心理预期推断
  *
- * 流程: CameraX 30fps → FaceLandmarker(468点) → MicroExpressionAnalyzer(AU计算)
- *     → 情绪/焦虑指数 → 覆盖层显示 + 触发AI对话
+ * 流程: CameraX 30fps → FaceLandmarker(468点) → MicroExpressionAnalyzer
+ *     → 情绪/焦虑 + 头部偏航 → PsychologicalProjection(心理预期)
+ *     → 仪表盘显示 + 触发AI对话
  */
 class VideoFragment : Fragment() {
 
@@ -32,25 +31,33 @@ class VideoFragment : Fragment() {
     private lateinit var dashboard: EmotionDashboardView
     private lateinit var memory: com.xinan.app.data.MemoryRepository
     private val analyzer = MicroExpressionAnalyzer()
+    private val projection = PsychologicalProjection()   // ★ 心理预期引擎
 
-    // 最近一次分析结果 (用于UI更新)
     private var lastEmotion = "平静"
     private var lastAnxiety = 0
     private var lastMicroExpr = emptyList<String>()
+    private var lastProjection: PsychologicalProjection.Projection? = null  // ★
 
-    private var lastAlertTime = 0L  // 防重复触发
+    private var lastAlertTime = 0L
 
-    // 焦虑指数变化回调 (供UI层显示仪表盘)
-    var onEmotionUpdate: ((emotion: String, anxiety: Int, microExpr: List<String>) -> Unit)? = null
+    /** 情绪+心理预期更新回调 (供外部读取, 如聊天模块) */
+    var onEmotionUpdate: ((emotion: String, anxiety: Int, microExpr: List<String>, projection: PsychologicalProjection.Projection?) -> Unit)? = null
+
+    /** 当前最新心理预期 (供聊天模块读取, 实现"给出他的心理预期") */
+    fun currentProjection(): PsychologicalProjection.Projection? = lastProjection
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         previewView = PreviewView(requireContext())
-        // 叠加情绪仪表盘 (右下角)
         val overlay = android.widget.FrameLayout(requireContext())
         overlay.addView(previewView)
         dashboard = EmotionDashboardView(requireContext())
-        val lp = android.widget.FrameLayout.LayoutParams(500, 260, android.view.Gravity.END or android.view.Gravity.BOTTOM)
-        lp.setMargins(16, 16, 16, 120)
+        // 心理预期区块需更大覆盖层
+        val lp = android.widget.FrameLayout.LayoutParams(
+            resources.getDimensionPixelSize(com.xinan.app.R.dimen.dashboard_overlay_w),
+            resources.getDimensionPixelSize(com.xinan.app.R.dimen.dashboard_overlay_h),
+            android.view.Gravity.END or android.view.Gravity.BOTTOM
+        )
+        lp.setMargins(12, 12, 12, 12)
         overlay.addView(dashboard, lp)
         return overlay
     }
@@ -61,12 +68,15 @@ class VideoFragment : Fragment() {
         memory = com.xinan.app.data.MemoryRepository(requireContext())
         setupFaceLandmarker()
         startCamera()
-        onEmotionUpdate = { emotion, anxiety, micro ->
+        onEmotionUpdate = { emotion, anxiety, micro, proj ->
+            // ★ 写入全局状态, 供聊天模式读取心理预期
+            com.xinan.app.vision.EmotionStateHolder.update(emotion, anxiety, proj)
             activity?.runOnUiThread {
                 dashboard.update(emotion, anxiety, micro)
+                dashboard.updateProjection(proj)
             }
-            // 后台记录情绪日志
-            kotlinx.coroutines.GlobalScope.launch {
+            // 后台记录情绪日志 (用 lifecycleScope 替换泄漏的 GlobalScope)
+            viewLifecycleOwner.lifecycleScope.launch {
                 memory.recordEmotion("video", emotion, anxiety)
             }
         }
@@ -74,30 +84,29 @@ class VideoFragment : Fragment() {
 
     private fun setupFaceLandmarker() {
         faceLandmarker = FaceLandmarkerHelper(requireContext()) { landmarks ->
-            // 每帧468点 → 微表情分析 (30fps)
             val result = analyzer.analyzeFrame(landmarks)
             if (result != null) {
                 lastEmotion = result.emotion
                 lastAnxiety = result.anxietyScore
                 lastMicroExpr = result.microExpressions
-                onEmotionUpdate?.invoke(lastEmotion, lastAnxiety, lastMicroExpr)
 
-                // 焦虑指数升高 → 触发疏导 (示例: 通知上层)
-                if (result.anxietyScore >= 60) {
-                    onHighAnxietyDetected(result)
-                }
+                // ★ 喂入心理预期引擎
+                val proj = projection.feed(result, result.headYawDeg, result.blinkRate)
+                if (proj != null) lastProjection = proj
+
+                onEmotionUpdate?.invoke(lastEmotion, lastAnxiety, lastMicroExpr, lastProjection)
+
+                if (result.anxietyScore >= 60) onHighAnxietyDetected(result)
             }
         }
         faceLandmarker.setup()
     }
 
-    /** 高焦虑触发疏导: 30秒防抖 + 启动正念呼吸 */
+    /** 高焦虑触发疏导: 30 秒防抖 + 启动正念呼吸 */
     private fun onHighAnxietyDetected(result: MicroExpressionAnalyzer.AnalysisResult) {
         val now = System.currentTimeMillis()
-        if (now - lastAlertTime < 30000) return  // 30秒内不重复
+        if (now - lastAlertTime < 30000) return
         lastAlertTime = now
-
-        // 启动正念呼吸引导
         try {
             val intent = android.content.Intent(requireContext(), com.xinan.app.relax.BreathingGuideActivity::class.java)
             startActivity(intent)
@@ -123,17 +132,14 @@ class VideoFragment : Fragment() {
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setTargetResolution(android.util.Size(640, 480))
                 .build()
-
             imageAnalysis.setAnalyzer(ExecutorsCompat.backgroundExecutor()) { imageProxy ->
                 processImageProxy(imageProxy)
             }
 
-            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA  // 前置摄像头(自拍)
-
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageAnalysis
+                    this, CameraSelector.DEFAULT_FRONT_CAMERA, preview, imageAnalysis
                 )
             } catch (e: Exception) {
                 android.util.Log.e("VideoFragment", "相机启动失败: ${e.message}")
@@ -141,14 +147,19 @@ class VideoFragment : Fragment() {
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    /** 帧处理: YUV_420_888 → Bitmap → FaceLandmarker (前置镜像) */
+    /** 帧处理: YUV_420_888 → Bitmap → FaceLandmarker (前置镜像). 异常不泄漏 imageProxy */
     private fun processImageProxy(imageProxy: ImageProxy) {
-        imageProxy.image?.let { img ->
-            val bitmap = com.xinan.app.vision.YuvToBitmap.convert(img)
-            val mirrored = com.xinan.app.vision.YuvToBitmap.mirror(bitmap)  // 前置摄像头镜像
-            faceLandmarker.processFrame(mirrored, imageProxy.imageInfo.timestamp)
+        try {
+            imageProxy.image?.let { img ->
+                val bitmap = com.xinan.app.vision.YuvToBitmap.convert(img)
+                val mirrored = com.xinan.app.vision.YuvToBitmap.mirror(bitmap)
+                faceLandmarker.processFrame(mirrored, imageProxy.imageInfo.timestamp)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("VideoFragment", "帧处理异常: ${e.message}")
+        } finally {
+            imageProxy.close()
         }
-        imageProxy.close()
     }
 
     private fun checkPermissions() {

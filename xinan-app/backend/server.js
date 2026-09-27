@@ -1,12 +1,11 @@
 // ============================================================
-// 「心安」后端 API 服务 (Node.js + Express)
-// 功能: 手机号注册/登录 + 情绪数据统一收纳 + 深度分析
+// 「心安」后端 API 服务 (Node.js + Express) — 精简版, 无账号
+// 功能: 情绪数据统一收纳 + 深度分析 (匿名设备标识, 无需注册登录)
 // 运行: npm install express mysql2 cors crypto
 //       node server.js
 // ============================================================
 const express = require('express');
 const mysql = require('mysql2/promise');
-const crypto = require('crypto');
 const cors = require('cors');
 
 const app = express();
@@ -15,22 +14,15 @@ app.use(cors());
 
 // ---------- 配置 ----------
 const CFG = {
-  port: 3000,
+  port: 3000,                 // HTTP 端口 (无证书时回退 / 301 重定向到 HTTPS)
+  httpsPort: 3443,            // HTTPS 端口
   db: { host: 'localhost', user: 'xinan', password: 'xinan123', database: 'xinan' },
-  jwtSecret: 'xinan-secret-change-me',
-  smsSecret: 'sms-secret', // 短信服务配置(阿里云/腾讯云)
+  https: {
+    // 证书路径 (跑 backend/gen-cert.sh 生成). 存在则启 HTTPS, 否则回退 HTTP
+    cert: './cert/cert.pem',
+    key:  './cert/key.pem',
+  },
 };
-
-// ---------- 工具 ----------
-// 手机号哈希 (隐私: 不放明文)
-function hashPhone(phone, salt = 'xinan-salt') {
-  return crypto.createHash('sha256').update(phone + salt).digest('hex');
-}
-// 简单Token
-function makeToken(userId) {
-  return crypto.createHmac('sha256', CFG.jwtSecret)
-    .update(userId + Date.now()).digest('hex');
-}
 
 let db;
 async function initDb() {
@@ -38,52 +30,21 @@ async function initDb() {
   console.log('✅ 数据库连接成功');
 }
 
-// ---------- API: 注册 ----------
-// POST /api/register {phone, code, nickname}
-app.post('/api/register', async (req, res) => {
-  try {
-    const { phone, code, nickname } = req.body;
-    // TODO: 校验短信验证码 (对接短信服务, 此处简化: 123456)
-    if (code !== '123456') return res.status(400).json({ ok: false, msg: '验证码错误' });
-    const userId = crypto.randomUUID();
-    const phoneHash = hashPhone(phone);
-    await db.query(
-      'INSERT INTO users (user_id, phone_hash, nickname) VALUES (?,?,?)',
-      [userId, phoneHash, nickname || '心安用户']
-    );
-    res.json({ ok: true, token: makeToken(userId), userId });
-  } catch (e) {
-    if (e.code === 'ER_DUP_ENTRY') return res.status(400).json({ ok: false, msg: '手机号已注册' });
-    res.status(500).json({ ok: false, msg: e.message });
-  }
-});
-
-// ---------- API: 登录 ----------
-// POST /api/login {phone, code}
-app.post('/api/login', async (req, res) => {
-  const { phone, code } = req.body;
-  if (code !== '123456') return res.status(400).json({ ok: false, msg: '验证码错误' });
-  const [rows] = await db.query('SELECT user_id FROM users WHERE phone_hash=?', [hashPhone(phone)]);
-  if (!rows.length) return res.status(404).json({ ok: false, msg: '用户不存在, 请注册' });
-  await db.query('UPDATE users SET last_active=NOW() WHERE user_id=?', [rows[0].user_id]);
-  res.json({ ok: true, token: makeToken(rows[0].user_id), userId: rows[0].user_id });
-});
-
-// ---------- API: 情绪事件上报 (核心) ----------
-// POST /api/emotion {userId, mode, emotionType, anxietyScore, microExpr, triggerKw, strategyUsed, strategyEffect}
+// ---------- API: 情绪事件上报 (核心, 匿名设备ID) ----------
+// POST /api/emotion {deviceId, mode, emotionType, anxietyScore, microExpr, triggerKw, strategyUsed, strategyEffect}
 app.post('/api/emotion', async (req, res) => {
   const {
-    userId, mode, emotionType, anxietyScore,
+    deviceId, mode, emotionType, anxietyScore,
     microExpr, triggerKw, strategyUsed, strategyEffect,
     srcVisual, srcText, srcAudio, confidence,
   } = req.body;
   await db.query(
     `INSERT INTO emotion_events
-     (user_id, event_time, mode, emotion_type, anxiety_score, confidence,
+     (device_id, event_time, mode, emotion_type, anxiety_score, confidence,
       micro_expr, trigger_kw, strategy_used, strategy_effect,
       src_visual, src_text, src_audio)
      VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [userId, mode, emotionType, anxietyScore, confidence,
+    [deviceId, mode, emotionType, anxietyScore, confidence,
      JSON.stringify(microExpr), triggerKw, strategyUsed, strategyEffect,
      srcVisual || 0, srcText || 0, srcAudio || 0]
   );
@@ -91,12 +52,12 @@ app.post('/api/emotion', async (req, res) => {
 });
 
 // ---------- API: 会话开始/结束 ----------
-// POST /api/session/start {userId, mode, anxietyStart}
+// POST /api/session/start {deviceId, mode, anxietyStart}
 app.post('/api/session/start', async (req, res) => {
-  const { userId, mode, anxietyStart } = req.body;
+  const { deviceId, mode, anxietyStart } = req.body;
   const [r] = await db.query(
-    'INSERT INTO sessions (user_id, start_time, mode, anxiety_start) VALUES (?, NOW(), ?, ?)',
-    [userId, mode, anxietyStart]
+    'INSERT INTO sessions (device_id, start_time, mode, anxiety_start) VALUES (?, NOW(), ?, ?)',
+    [deviceId, mode, anxietyStart]
   );
   res.json({ ok: true, sessionId: r.insertId });
 });
@@ -112,12 +73,12 @@ app.post('/api/session/end', async (req, res) => {
   res.json({ ok: true });
 });
 
-// ---------- API: 个人进度/趋势 ----------
-// GET /api/user/:id/progress
-app.get('/api/user/:id/progress', async (req, res) => {
+// ---------- API: 单设备进度/趋势 ----------
+// GET /api/device/:id/progress
+app.get('/api/device/:id/progress', async (req, res) => {
   const [rows] = await db.query(
     `SELECT DATE(event_time) AS d, AVG(anxiety_score) AS avg_a, COUNT(*) AS cnt
-     FROM emotion_events WHERE user_id=? AND event_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+     FROM emotion_events WHERE device_id=? AND event_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
      GROUP BY DATE(event_time) ORDER BY d`, [req.params.id]);
   res.json({ ok: true, data: rows });
 });
@@ -147,13 +108,33 @@ app.get('/api/analysis/trends', async (req, res) => {
 app.get('/api/analysis/efficacy', async (req, res) => {
   const [rows] = await db.query(
     `SELECT week_no, AVG(avg_anxiety) AS avg_a, AVG(gscore) AS avg_g,
-     COUNT(*) AS users FROM user_progress GROUP BY week_no ORDER BY week_no`);
+     COUNT(*) AS users FROM device_progress GROUP BY week_no ORDER BY week_no`);
   res.json({ ok: true, data: rows });
 });
 
-// ---------- 启动 ----------
+// ---------- 启动 (HTTPS 优先, 无证书回退 HTTP) ----------
+const fs = require('fs');
+const http = require('http');
+const https = require('https');
+
 initDb().then(() => {
-  app.listen(CFG.port, () => console.log(`🚀 心安后端运行: http://0.0.0.0:${CFG.port}`));
+  const hasCert = fs.existsSync(CFG.https.cert) && fs.existsSync(CFG.https.key);
+  if (hasCert) {
+    const creds = { cert: fs.readFileSync(CFG.https.cert), key: fs.readFileSync(CFG.https.key) };
+    https.createServer(creds, app).listen(CFG.httpsPort, '0.0.0.0', () =>
+      console.log(`🔒 HTTPS: https://0.0.0.0:${CFG.httpsPort}`));
+    // HTTP → HTTPS 301 重定向 (http 访问自动跳转)
+    http.createServer((req, res) => {
+      const host = (req.headers.host || '').split(':')[0];
+      res.writeHead(301, { Location: `https://${host}:${CFG.httpsPort}${req.url}` });
+      res.end();
+    }).listen(CFG.port, '0.0.0.0', () =>
+      console.log(`↪️ HTTP→HTTPS 重定向: http://0.0.0.0:${CFG.port} → :${CFG.httpsPort}`));
+  } else {
+    console.warn('⚠️  未找到证书 (cert/cert.pem + key.pem), 回退明文 HTTP');
+    console.warn('    请跑 backend/gen-cert.sh 生成自签证书后重启启用 HTTPS');
+    app.listen(CFG.port, () => console.log(`🚀 HTTP(回退): http://0.0.0.0:${CFG.port}`));
+  }
 }).catch(e => {
   console.error('❌ 启动失败:', e.message);
   process.exit(1);

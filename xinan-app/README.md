@@ -1,8 +1,8 @@
-# 「心安」— 安卓焦虑情绪助手 (开发项目)
+# 「心安」— 安卓焦虑情绪助手 (打开即用版)
 
 > **宗旨**: 让人类开心快乐，摆脱焦虑情绪困扰
 > **核心**: 视觉微表情心理学精准识别 + 实时分析 + 对话疏导
-> **平台**: 一加手机 (12GB / 天玑9000) | Android APP + 云端后端
+> **特点**: ✅ 无需注册登录，打开即用 ✅ 全部本地运行，数据不出手机
 
 ---
 
@@ -10,196 +10,108 @@
 
 ```
 心安项目/
-├── docs/                      # 文档
-│   └── 方案文档.md             # 完整方案 (v3.0)
+├── docs/                      # 文档 (设计思路)
+│   ├── 心理预期引擎设计.md
+│   ├── UI主题与构建优化.md
+│   └── HTTPS部署.md
 ├── database/
-│   └── schema.sql             # 数据库表结构 (用户/情绪/会话/聚合分析)
+│   └── schema.sql             # 数据库表结构 (匿名情绪事件/会话/聚合分析)
 ├── backend/
-│   └── server.js              # 后端 API (注册/登录/情绪上报/分析)
+│   └── server.js              # 后端 API (可选: 情绪上报/分析, 无账号)
 └── android/
     └── app/src/main/java/com/xinan/app/
-        ├── MainActivity.kt        # 双模式入口 (聊天/视频)
-        ├── vision/
-        │   └── MicroExpressionAnalyzer.kt  # ★ 微表情分析核心
-        ├── chat/                  # 聊天模式 (待开发)
-        │   └── ChatFragment.kt
-        ├── video/                 # 视频陪伴模式 (待开发)
-        │   └── VideoFragment.kt
-        └── llm/                   # 大模型模块 (待开发)
-            ├── ModelManager.kt    # 模型添加/切换
-            └── LLMInference.kt    # MediaPipe LLM推理
+        ├── MainActivity.kt        # 主入口: 双模式切换 (聊天/视频), 打开即用
+        ├── vision/                # ★ 视觉微表情核心
+        │   ├── MicroExpressionAnalyzer.kt   # FACS 微表情分析 + 焦虑指数
+        │   ├── FaceLandmarkerHelper.kt      # MediaPipe 468点人脸关键点
+        │   ├── PsychologicalProjection.kt   # 心理预期推断引擎
+        │   ├── EmotionStateHolder.kt        # 跨模式情绪状态
+        │   └── YuvToBitmap.kt               # 相机帧转换
+        ├── chat/                  # 聊天模式 (CBT 对话疏导)
+        ├── video/                 # 视频陪伴模式 (摄像头实时分析 + 情绪仪表盘)
+        ├── llm/                   # 本地大模型模块 (GGUF 推理/管理/下载)
+        ├── data/                  # 本地记忆系统 (Room 情绪日志/趋势/报告)
+        ├── relax/                 # 正念呼吸引导 (高焦虑自动触发)
+        └── report/                # 成长报告 (30天情绪趋势)
 ```
 
-## 快速开始（电脑端开发）
+## 快速开始
 
-### 1. 环境要求
-- **Android Studio** (最新版 + Android SDK 33+)
-- **Node.js 18+** (后端)
-- **MySQL 8+** (数据库)
+### 环境要求
+- **Android Studio** (最新版 + Android SDK 35+)
+- 本机无 JDK 时可用 GitHub Actions 云构建 APK（见下）
 
-### 2. 数据库
+### 构建 Android APP
 ```bash
-mysql -u root -p < database/schema.sql
+# 本机构建
+cd android
+gradle assembleDebug
+# APK 输出: app/build/outputs/apk/debug/app-debug.apk
+
+# 云构建 (无电脑也能出 APK)
+# 推送到 GitHub main 分支 → Actions 自动构建 → 下载 xinan-debug-apk
+# 推送脚本: node push_xinan.js <owner/repo>
 ```
 
-### 3. 后端
+### 运行
+1. 安装 APK (允许未知来源)
+2. 打开即用: 主界面可切换「💬 聊天」/「📹 视频」
+3. 视频模式首次使用授权摄像头
+4. 聊天模式需装大模型 (菜单→🧠模型管理, 下载 GGUF 或放入 `Android/data/com.xinan.app/files/models/`)
+5. 情绪数据自动记录在本机 Room 数据库, 可看 📈 成长报告
+
+### 后端 (可选, 情绪数据云端收纳分析)
 ```bash
 cd backend
 npm install express mysql2 cors
-node server.js
-# 后端运行在 http://localhost:3000
+mysql -u root -p < ../database/schema.sql
+node server.js        # http://localhost:3000 (无证书回退)
+# HTTPS 部署见 docs/HTTPS部署.md
 ```
+后端采用**匿名设备标识**，无注册登录、无手机号，纯情绪数据分析。
 
-### 4. Android APP
-1. Android Studio 打开 `android/` 目录
-2. 添加依赖 (build.gradle):
-```gradle
-dependencies {
-    // MediaPipe (人脸+LLM)
-    implementation 'com.google.mediapipe:tasks-vision:0.10.14'
-    implementation 'com.google.mediapipe:tasks-genai:0.10.14'
-    // CameraX
-    implementation 'androidx.camera:camera-camera2:1.3.4'
-    // 网络
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    // 本地数据库
-    implementation 'androidx.room:room-runtime:2.6.1'
-}
-```
-3. 下载 GGUF 模型放入 `app/src/main/assets/models/` 或运行时下载
-4. 连接手机运行
+## 核心模块
 
-## 核心模块开发顺序
-
-| 优先级 | 模块 | 文件 | 说明 |
-|--------|------|------|------|
-| ★★★★★ | 微表情分析 | MicroExpressionAnalyzer.kt | 已提供核心帧分析逻辑 |
-| ★★★★★ | 视频捕捉 | VideoFragment.kt | CameraX + FaceMesh 实时 |
-| ★★★★ | LLM 对话 | LLMInference.kt | MediaPipe LLM + CBT 提示 |
-| ★★★★ | 模型管理 | ModelManager.kt | GGUF 添加/切换 |
-| ★★★ | 后端对接 | ApiClient.kt | 注册/登录/情绪上报 |
-| ★★★ | 记忆系统 | MemoryRepository.kt | Room 本地存储 |
-
-## 微表情分析模块说明 (MicroExpressionAnalyzer)
-
-已实现:
-- ✅ FaceMesh 468点 → FACS AU 强度计算 (AU4/AU23/AU15/AU12/AU17)
-- ✅ 眨眼频率检测 (AU45, 焦虑时加快)
-- ✅ 1秒滑窗 → 微表情突变检测
-- ✅ 焦虑指数计算 (FACS 心理学加权)
-- ✅ 情绪判定 (焦虑/紧张/快乐/悲伤/平静)
-
-待接入:
-- [ ] FaceLandmarker 实时帧输入
-- [ ] 个人基线校准 (30秒平静视频)
-- [ ] 深度学习分类器 (CNN+LSTM) 替代规则加权
-- [ ] 与对话上下文融合
-
-## API 一览 (后端)
-
-| 方法 | 路径 | 功能 |
+| 模块 | 文件 | 说明 |
 |------|------|------|
-| POST | /api/register | 手机号注册 |
-| POST | /api/login | 短信登录 |
-| POST | /api/emotion | 情绪事件上报 |
-| POST | /api/session/start | 会话开始 |
-| POST | /api/session/end | 会话结束 |
-| GET | /api/user/:id/progress | 个人30天趋势 |
-| GET | /api/analysis/trends | 匿名聚合分析 |
-| GET | /api/analysis/efficacy | 疗效研究 |
+| ★★★★★ | MicroExpressionAnalyzer.kt | 微表情分析核心 (FACS AU + 焦虑指数) |
+| ★★★★★ | VideoFragment.kt | CameraX + FaceMesh 实时视频分析 |
+| ★★★★ | PsychologicalProjection.kt | 心理预期推断 (焦虑/压抑/期待/回避...) |
+| ★★★★ | LLMInference.kt | MediaPipe 本地 LLM + CBT 对话 |
+| ★★★★ | ModelManager.kt | GGUF 模型添加/切换/下载 |
+| ★★★ | MemoryRepository.kt | Room 本地情绪记忆/趋势/报告 |
+| ★★★ | BreathingGuideActivity.kt | 正念呼吸引导 (高焦虑防抖触发) |
+
+## 设计思路
+
+- **微表情→情绪**: FaceMesh 468点 → FACS AU 强度 (AU4/AU23/AU15/AU12/AU17) → 焦虑指数 (心理学加权)
+- **心理预期**: 头部偏航(视线回避) + 眨眼率滑窗 + 焦虑轨迹 → 8 类心理预期评分, 对话中"给出"对方预期
+- **对话疏导**: CBT 系统提示词 + 心理预期镜像反馈 ("我注意到你似乎…, 是这样吗?")
+- **隐私优先**: 摄像头数据仅本地处理; 情绪记录存本机; 后端仅匿名聚合
 
 ## 隐私合规
 
-- 手机号哈希存储（SHA-256+salt）
-- 情绪数据可选匿名化
+- 无账号体系: 不收集手机号/身份信息, 打开即用
 - 摄像头数据仅本地处理
-- 用户可导出/删除个人数据
+- 后端仅存匿名设备标识 + 情绪统计
 - 非医疗设备，严重情况转介专业帮助
+
 ---
 
-## 开发进度 (2026-09-11)
+## 开发进度
 
-### ✅ 已完成 (v0.1 骨架)
-- 双模式入口 MainActivity (聊天/视频切换)
-- **视频模式**: VideoFragment (CameraX 前置30fps) + FaceLandmarkerHelper (MediaPipe 468点 GPU加速) + MicroExpressionAnalyzer (FACS AU计算/焦虑指数)
-- **聊天模式**: ChatFragment + MessageAdapter + LLMInference (MediaPipe LLM + CBT系统提示词)
-- **模型管理**: ModelManager (GGUF 推荐模型/本地导入/切换)
-- **后端对接**: ApiClient (注册/登录/情绪上报)
-- **后端**: server.js (Node.js, 注册/情绪/分析 API)
-- **数据库**: schema.sql (用户/情绪事件/会话/聚合)
-- **构建**: build.gradle + AndroidManifest
+### ✅ 已完成
+- 双模式入口 MainActivity (打开即用, 无登录)
+- 视频模式: CameraX 前置 + FaceLandmarker 468点 GPU + 微表情分析 + 情绪仪表盘 + 心理预期引擎
+- 聊天模式: ChatFragment + LLMInference (MediaPipe LLM + CBT)
+- 模型管理: ModelManager (推荐模型/本地导入/切换/下载)
+- 记忆系统: Room 本地情绪日志 + 30天趋势 + 成长报告
+- 正念呼吸: BreathingGuideActivity (高焦虑自动引导)
+- 后端: server.js (匿名情绪上报/聚合分析, 无账号)
+- 数据库: schema.sql (情绪事件/会话/聚合)
+- 构建: GitHub Actions 云构建 APK
 
 ### 🔜 下一步开发
-- [ ] YUV→Bitmap 完整转换 (VideoFragment 帧处理)
-- [ ] 情绪仪表盘 UI (焦虑指数条/心情图标覆盖层)
 - [ ] 微表情深度学习分类器 (CNN+LSTM 替换规则加权)
-- [ ] 个人基线校准 (30秒平静视频)
-- [ ] 短信验证码服务对接
-- [ ] 记忆系统 (Room 本地情绪日志)
-
-### 📱 运行
-1. Android Studio 打开 `android/`
-2. 下载 GGUF 模型放入手机 `Android/data/com.xinan.app/files/models/`
-3. 连接一加手机运行
-
----
-
-## 开发进度 v0.2 (2026-09-11 更新)
-
-### ✅ 本轮新增 (步骤1-3)
-1. **YuvToBitmap.kt** — YUV_420_888→Bitmap 真实转换 (BT.601, 前置镜像)
-2. **EmotionDashboardView.kt** — 情绪仪表盘覆盖层 (焦虑指数条/心情emoji/微表情提示, 焦虑变色)
-3. **XinanMemory.kt** — Room 情绪日志数据库 (Entity/DAO, 焦虑均值/情绪分布/高焦虑统计)
-4. **MemoryRepository.kt** — 记忆仓储 (记录情绪+30天趋势+成长报告)
-5. **VideoFragment 升级** — 接入真实YUV转换 + 仪表盘覆盖层 + 情绪自动记录
-
-### 代码结构 (21文件)
-```
-android/app/src/main/java/com/xinan/app/
-├── MainActivity.kt          # 双模式入口
-├── chat/                    # 聊天模式
-│   ├── ChatFragment.kt
-│   └── MessageAdapter.kt
-├── video/                   # 视频模式 ★
-│   ├── VideoFragment.kt     # 摄像头+仪表盘+记忆
-│   └── EmotionDashboardView.kt
-├── vision/                  # 视觉微表情
-│   ├── FaceLandmarkerHelper.kt
-│   ├── MicroExpressionAnalyzer.kt
-│   └── YuvToBitmap.kt
-├── llm/                     # 大模型
-│   ├── LLMInference.kt
-│   └── ModelManager.kt
-└── data/                    # 数据层
-    ├── ApiClient.kt         # 后端
-    ├── XinanMemory.kt       # Room数据库
-    └── MemoryRepository.kt  # 记忆仓储
-```
-
----
-
-## 云构建 (无电脑也能出 APK!)
-
-### GitHub Actions 自动构建
-项目已配置 `.github/workflows/build-apk.yml`:
-- push 到 main 分支 (android/** 变更) 自动构建
-- 也可在 GitHub 网页手动触发: **Actions → Build APK → Run workflow**
-
-### 使用步骤
-1. 代码推送到 GitHub (main 分支)
-2. GitHub Actions 自动云端编译 → 产出 APK
-3. 构建成功后:
-   - **Artifacts**: Actions 页面下载 xinan-debug-apk
-   - **Releases**: 主页 Releases 下载 APK
-4. 手机安装 APK (允许安装未知来源)
-
-### 手机安装注意事项
-- debug 版 APK 可直接安装 (未签名正式版)
-- 首次运行需授权: 摄像头权限(视频模式)/存储权限(模型)
-- 模型需放入: Android/data/com.xinan.app/files/models/ 或应用内下载
-
-### 触发方式
-```bash
-# 本地修改后推 GitHub (用 gh_sync.js)
-node gh_sync.js push /storage/emulated/0/MT2/心安项目 123Mader/opencode-skills xinan-app
-```
+- [ ] 个人基线校准优化
+- [ ] 语音情绪识别 (src_audio)

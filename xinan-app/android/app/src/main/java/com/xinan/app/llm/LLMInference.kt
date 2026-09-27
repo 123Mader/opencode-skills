@@ -58,12 +58,18 @@ class LLMInference(private val context: Context) {
     }
 
     /**
-     * 对话 (带视觉情绪上下文)
+     * 对话 (带视觉情绪上下文 + ★心理预期推断)
      * @param userMessage 用户输入
      * @param visualContext 视觉情绪信息 (如 "焦虑指数75, 皱眉, 嘴唇紧抿") — 来自微表情分析
+     * @param projection 视频微表情推断出的心理预期 (可选) — 注入"镜像反馈"引导
      * @param onResult 结果回调
      */
-    fun chat(userMessage: String, visualContext: String? = null, onResult: (String) -> Unit) {
+    fun chat(
+        userMessage: String,
+        visualContext: String? = null,
+        projection: com.xinan.app.vision.PsychologicalProjection.Projection? = null,
+        onResult: (String) -> Unit,
+    ) {
         val model = llmInference ?: run { onResult("模型未加载"); return }
         conversationHistory.add("用户: $userMessage")
 
@@ -75,9 +81,10 @@ class LLMInference(private val context: Context) {
         // 认知偏差识别
         val (biasType, biasQuote) = cbtFlow.identifyBias(userMessage)
         if (biasType != null) currentStage = CBTFlow.Stage.IDENTIFY
-        // 拼接 CBT 系统提示词 + 阶段引导 + 视觉观察 + 用户消息
+        // 拼接 CBT 系统提示词 + 阶段引导 + 视觉观察 + ★心理预期镜像反馈 + 用户消息
         var prompt = CBT_SYSTEM_PROMPT + "\n\n"
         if (!visualContext.isNullOrBlank()) prompt += "[视觉观察: $visualContext]\n"
+        if (projection != null) prompt += cbtFlow.buildProjectionReflection(projection) + "\n"
         prompt += cbtFlow.buildStagePrompt(CBTFlow.Context(currentStage, userMessage, biasType, biasQuote)) + "\n"
         prompt += userMessage
 

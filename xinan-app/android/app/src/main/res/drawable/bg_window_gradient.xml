@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 「心安」窗口渐变背景 (薄荷雾 → 表面色) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="135"
+        android:startColor="@color/md_primary_container"
+        android:centerColor="@color/md_surface"
+        android:endColor="@color/md_secondary_container"
+        android:type="linear" />
+</shape>

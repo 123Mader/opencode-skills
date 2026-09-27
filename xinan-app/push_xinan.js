@@ -8,7 +8,7 @@ const TOKEN = fs.readFileSync('/storage/emulated/0/MT2/apks/gh_token.txt', 'utf8
 const [,, repo, destDir = ''] = process.argv;
 if (!repo) { console.error('用法: node push_xinan.js <owner/repo> [目标子目录]'); process.exit(1); }
 
-const SRC = '/storage/emulated/0/MT2/心安项目';
+const SRC = '/storage/emulated/0/MT2/安心项目库管理/心安项目';
 const API = 'https://api.github.com';
 const HEADERS = { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json', 'User-Agent': 'xinan-push' };
 

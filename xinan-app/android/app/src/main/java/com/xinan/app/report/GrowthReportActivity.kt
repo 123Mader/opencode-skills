@@ -5,13 +5,13 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.xinan.app.data.MemoryRepository
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 /**
  * 成长报告界面 — 情绪趋势图表 + 分析建议
- * 入口: 主界面"成长报告"按钮
+ * 入口: 主界面 toolbar 菜单「📈 成长报告」
  */
 class GrowthReportActivity : AppCompatActivity() {
 
@@ -63,15 +63,13 @@ class GrowthReportActivity : AppCompatActivity() {
         loadReport()
     }
 
-    /** 加载近30天情绪数据并显示 */
+    /** 加载近30天情绪数据并显示 (lifecycleScope, Activity 销毁自动取消, 不泄漏) */
     private fun loadReport() {
-        GlobalScope.launch {
-            // 读取近30天日志 (简化: 从数据库按天聚合)
+        lifecycleScope.launch {
             val since = System.currentTimeMillis() - 30L * 24 * 3600 * 1000
             val logs = com.xinan.app.data.XinanDatabase.get(this@GrowthReportActivity)
                 .emotionDao().getRecent(since)
 
-            // 按天聚合平均焦虑
             val dayMap = linkedMapOf<String, MutableList<Int>>()
             val fmt = java.text.SimpleDateFormat("MM-dd", java.util.Locale.getDefault())
             for (log in logs) {

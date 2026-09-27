@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 「心安」夜间配色 — 覆盖 md_* 基础名, 由 Theme.Material3.DayNight 自动应用 -->
+<resources>
+    <color name="md_primary">#9AD0CB</color>
+    <color name="md_on_primary">#003733</color>
+    <color name="md_primary_container">#1F5050</color>
+    <color name="md_on_primary_container">#B6ECE6</color>
+
+    <color name="md_secondary">#B1CCCA</color>
+    <color name="md_on_secondary">#1B3534</color>
+    <color name="md_secondary_container">#324B4B</color>
+    <color name="md_on_secondary_container">#CDE8E2</color>
+
+    <color name="md_tertiary">#ADC8FF</color>
+    <color name="md_on_tertiary">#10344D</color>
+    <color name="md_tertiary_container">#2D4A64</color>
+    <color name="md_on_tertiary_container">#D5E4FF</color>
+
+    <color name="md_error">#FFB4AB</color>
+    <color name="md_on_error">#690005</color>
+    <color name="md_error_container">#93000A</color>
+    <color name="md_on_error_container">#FFDAD6</color>
+
+    <color name="md_background">#0F1515</color>
+    <color name="md_on_background">#E0E3E2</color>
+    <color name="md_surface">#191C1C</color>
+    <color name="md_on_surface">#E0E3E2</color>
+    <color name="md_surface_variant">#3F4948</color>
+    <color name="md_on_surface_variant">#BEC9C6</color>
+
+    <color name="md_outline">#899392</color>
+    <color name="md_outline_variant">#3F4948</color>
+</resources>
