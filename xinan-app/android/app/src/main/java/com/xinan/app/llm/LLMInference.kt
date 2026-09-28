@@ -33,7 +33,8 @@ class LLMInference(private val context: Context) {
 
     private var llmInference: LlmInference? = null
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
-    private var conversationHistory = mutableListOf<String>()
+    @Volatile private var closed = false
+    private val conversationHistory = java.util.Collections.synchronizedList(mutableListOf<String>())
     private val cbtFlow = CBTFlow()
     private var currentStage = CBTFlow.Stage.LISTENING
 
@@ -42,18 +43,23 @@ class LLMInference(private val context: Context) {
      * @param modelPath assets/或本地文件路径
      */
     fun loadModel(modelPath: String, onLoaded: (Boolean) -> Unit) {
-        executor.execute {
-            try {
-                val options = LlmInference.LlmInferenceOptions.builder()
-                    .setModelPath(modelPath)
-                    .setMaxTokens(1024)
-                    .build()
-                llmInference = LlmInference.createFromOptions(context, options)
-                onLoaded(true)
-            } catch (e: Exception) {
-                android.util.Log.e("LLMInference", "模型加载失败: ${e.message}")
-                onLoaded(false)
+        if (closed) { onLoaded(false); return }
+        try {
+            executor.execute {
+                try {
+                    val options = LlmInference.LlmInferenceOptions.builder()
+                        .setModelPath(modelPath)
+                        .setMaxTokens(1024)
+                        .build()
+                    llmInference = LlmInference.createFromOptions(context, options)
+                    onLoaded(true)
+                } catch (e: Exception) {
+                    android.util.Log.e("LLMInference", "模型加载失败: ${e.message}")
+                    onLoaded(false)
+                }
             }
+        } catch (e: java.util.concurrent.RejectedExecutionException) {
+            onLoaded(false)
         }
     }
 
@@ -89,20 +95,26 @@ class LLMInference(private val context: Context) {
         prompt += userMessage
 
         // MediaPipe LLM: generateResponse (同步) 在后台线程执行
-        executor.execute {
-            try {
-                val result = model.generateResponse(prompt) ?: "抱歉, 我有点走神了, 能再说一遍吗?"
-                conversationHistory.add("心安: $result")
-                onResult(result)
-            } catch (e: Exception) {
-                onResult("抱歉, 我现在有点卡, 稍后再聊~")
+        if (closed) { onResult("会话已结束"); return }
+        try {
+            executor.execute {
+                try {
+                    val result = model.generateResponse(prompt) ?: "抱歉, 我有点走神了, 能再说一遍吗?"
+                    conversationHistory.add("心安: $result")
+                    onResult(result)
+                } catch (e: Exception) {
+                    onResult("抱歉, 我现在有点卡, 稍后再聊~")
+                }
             }
+        } catch (e: java.util.concurrent.RejectedExecutionException) {
+            onResult("会话已结束")
         }
     }
 
     /** 释放模型 */
     fun close() {
-        llmInference?.close()
+        closed = true
+        try { llmInference?.close() } catch (_: Throwable) {}
         executor.shutdown()
     }
 }

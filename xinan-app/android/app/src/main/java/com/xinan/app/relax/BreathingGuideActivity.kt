@@ -56,6 +56,7 @@ class BreathingGuideActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        breathingView.stop()
+        // ★ lateinit 保护: onCreate 未完成(异常)时也安全
+        try { breathingView.stop() } catch (_: Throwable) {}
     }
 }

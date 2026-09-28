@@ -123,8 +123,12 @@ class VideoFragment : Fragment() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
+            // ★ display 可能尚未 attach (极早生命周期), 取不到就跳过本次绑定, 避免 NPE
+            val rotation = try {
+                previewView.display?.rotation ?: 0
+            } catch (_: Throwable) { 0 }
             val preview = Preview.Builder()
-                .setTargetRotation(previewView.display.rotation)
+                .setTargetRotation(rotation)
                 .build()
                 .also { it.setSurfaceProvider(previewView.surfaceProvider) }
 

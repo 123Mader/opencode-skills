@@ -5,12 +5,17 @@ import android.os.Build
 import android.provider.MediaStore
 
 /**
- * 诊断打点: 每次调用立即写一个文件到 /sdcard/Download/xinan_trace_<时间>.txt
- * 崩溃(含 native SIGSEGV)前最后一个文件即崩点。外部可读 → 定位。
+ * 诊断打点: debug 构建写入 Download 目录辅助定位; release 构建仅输出 Logcat, 不落盘不污染存储
  */
 object Trace {
     private var counter = 0
+
+    /** release 构建为 false → 不写文件 */
+    private val fileEnabled: Boolean = BuildConfig.DEBUG
+
     fun log(stage: String, extra: String = "") {
+        android.util.Log.d("XinanTrace", "STEP $counter: $stage $extra")
+        if (!fileEnabled) return
         try {
             val app = XinanApp.instance ?: return
             if (Build.VERSION.SDK_INT < 29) {

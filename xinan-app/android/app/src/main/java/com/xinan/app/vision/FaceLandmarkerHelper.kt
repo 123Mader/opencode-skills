@@ -27,6 +27,7 @@ class FaceLandmarkerHelper(private val context: Context, private val listener: (
     private val backgroundExecutor = Executors.newSingleThreadExecutor()
     private var landmarker: FaceLandmarker? = null
     private var isProcessing = false
+    private var lastTimestampMs = -1L
 
     /** 初始化 FaceLandmarker (GPU加速). 模型缺失不崩, 容错降级 */
     fun setup() {
@@ -47,6 +48,7 @@ class FaceLandmarkerHelper(private val context: Context, private val listener: (
                 }
                 .setErrorListener { error ->
                     android.util.Log.e("FaceLandmarker", "错误: ${error.message}")
+                    isProcessing = false  // ★ 出错也复位节流标志, 防卡死
                 }
                 .build()
 
@@ -61,10 +63,22 @@ class FaceLandmarkerHelper(private val context: Context, private val listener: (
     fun processFrame(bitmap: android.graphics.Bitmap, frameTimestampMs: Long) {
         val lm = landmarker ?: return  // 未初始化(模型缺失)直接跳过
         if (isProcessing) return  // 帧节流, 防积压
+        // ★ LIVE_STREAM 要求时间戳严格递增, 否则 MediaPipe 抛异常
+        if (frameTimestampMs <= lastTimestampMs) return
+        lastTimestampMs = frameTimestampMs
         isProcessing = true
         val mpImage = BitmapImageBuilder(bitmap).build()
-        backgroundExecutor.execute {
-            lm.detectAsync(mpImage, frameTimestampMs)
+        try {
+            backgroundExecutor.execute {
+                try {
+                    lm.detectAsync(mpImage, frameTimestampMs)
+                } catch (e: Exception) {
+                    android.util.Log.e("FaceLandmarker", "detectAsync: ${e.message}")
+                    isProcessing = false
+                }
+            }
+        } catch (e: java.util.concurrent.RejectedExecutionException) {
+            isProcessing = false  // executor 已关闭
         }
     }
 

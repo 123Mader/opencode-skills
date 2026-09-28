@@ -27,9 +27,11 @@ class ChatFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         Trace.log("8_chat_onCreateView")
         val root = LinearLayoutCompat(requireContext())
+        // ★ 先初始化 ChatFragment 自己的 adapter (此前在 apply{} 内赋值给了 RecyclerView.adapter, 导致 lateinit 未初始化闪退)
+        adapter = MessageAdapter(messages)
         recyclerView = RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = MessageAdapter(messages)
+            this.adapter = this@ChatFragment.adapter
         }
         val inputRow = android.widget.LinearLayout(requireContext()).apply {
             orientation = android.widget.LinearLayout.HORIZONTAL
@@ -60,9 +62,12 @@ class ChatFragment : Fragment() {
         if (modelFile.exists()) {
             Trace.log("12_chat_model_exists")
             llm.loadModel(modelFile.absolutePath) { ok ->
-                if (ok) messages.add(Message("ai", "你好呀，我是心安。今天感觉怎么样？"))
-                else messages.add(Message("ai", "模型加载失败, 请到菜单→🧠模型管理"))
-                adapter.notifyDataSetChanged()
+                // ★ 回调在后台线程, 必须切回主线程再改列表/刷新 UI
+                activity?.runOnUiThread {
+                    if (ok) messages.add(Message("ai", "你好呀，我是心安。今天感觉怎么样？"))
+                    else messages.add(Message("ai", "模型加载失败, 请到菜单→🧠模型管理"))
+                    adapter.notifyDataSetChanged()
+                }
             }
         } else {
             Trace.log("12_chat_no_model")
@@ -78,8 +83,11 @@ class ChatFragment : Fragment() {
         val visualContext = com.xinan.app.vision.EmotionStateHolder.formatVisualContext()
         val projection = com.xinan.app.vision.EmotionStateHolder.projection
         llm.chat(text, visualContext, projection) { reply ->
-            messages.add(Message("ai", reply))
-            activity?.runOnUiThread { adapter.notifyDataSetChanged() }
+            // ★ 回调在后台线程: 列表增改 + UI 刷新统一在主线程
+            activity?.runOnUiThread {
+                messages.add(Message("ai", reply))
+                adapter.notifyDataSetChanged()
+            }
         }
     }
 

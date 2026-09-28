@@ -75,6 +75,8 @@ class MicroExpressionAnalyzer {
      * 每帧调用 (30fps)
      */
     fun analyzeFrame(landmarks: List<FloatArray>): AnalysisResult? {
+        // ★ 点数保护: FaceLandmarker 应返回 468+ 点, 不足时跳过本帧, 防止索引越界崩溃
+        if (landmarks.size < 455) return null
         frameCount++
 
         val au = calcAUs(landmarks)

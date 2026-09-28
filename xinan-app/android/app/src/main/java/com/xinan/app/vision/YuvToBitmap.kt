@@ -27,6 +27,10 @@ object YuvToBitmap {
         val uvRowStride = image.planes[1].rowStride
         val uvPixelStride = image.planes[1].pixelStride
 
+        // 平面缓冲区边界保护 (部分设备 UV 布局/行距不同, 越界直接 throw)
+        val yLimit = yBuffer.limit()
+        val uvLimit = uBuffer.limit().coerceAtMost(vBuffer.limit())
+
         val pixels = IntArray(width * height)
 
         // 逐像素 YUV → RGB 转换 (只读Y平面 + 交错UV)
@@ -37,9 +41,10 @@ object YuvToBitmap {
                 val yIndex = yRowStart + col
                 val uvIndex = uvRowStart + (col / 2) * uvPixelStride
 
-                val y = (yBuffer.get(yIndex).toInt() and 0xFF)
-                val u = (uBuffer.get(uvIndex).toInt() and 0xFF) - 128
-                val v = (vBuffer.get(uvIndex).toInt() and 0xFF) - 128
+                // ★ 越界保护: 读不到就用中性值(灰色), 绝不 crash
+                val y = if (yIndex < yLimit) (yBuffer.get(yIndex).toInt() and 0xFF) else 128
+                val u = if (uvIndex < uvLimit) (uBuffer.get(uvIndex).toInt() and 0xFF) - 128 else 0
+                val v = if (uvIndex < uvLimit) (vBuffer.get(uvIndex).toInt() and 0xFF) - 128 else 0
 
                 // YUV → RGB (BT.601 标准, 快速整数近似)
                 val r = (y + 1.402f * v).toInt().coerceIn(0, 255)
